@@ -323,22 +323,21 @@ function(x, constraint = "N", lambda = 1, w=rep(1,length(x))){
 "plot.qss1" <-
 function(x, ...)
 {
-#plot(x[,1],x[,2],type="n",xlab="x",ylab="fit")
 lines(x[,1],x[,2], ...)
 }
 "plot.qss2" <-
-function (x, rgl = FALSE, ncol = 100, zcol = NULL, ...) 
+function (x, render = "contour", ncol = 100, zcol = NULL, ...) 
 {
     require(tripack)
-    if (rgl) 
-        require(rgl)
     y <- x[, 2]
     z <- x[, 3]
     x <- x[, 1]
     tri <- tri.mesh(x, y)
-    if (rgl) {
+    if (render == "rgl") {
+        require(rgl)
         collut <- terrain.colors(ncol)
-        if(!length(zcol))zcol <- z
+        if (!length(zcol)) 
+            zcol <- z
         if (max(z) > max(zcol) || min(z) < min(zcol)) 
             warning("fitted z values out of range of zcol vector")
         zlim <- range(zcol)
@@ -349,13 +348,15 @@ function (x, rgl = FALSE, ncol = 100, zcol = NULL, ...)
     }
     else {
         require(akima)
-        par(mfrow = c(1, 2))
-        plot(x, y, type = "n", axes = TRUE, xlab = "x", ylab = "y")
-        contour(interp(x, y, z), add = TRUE, frame.plot = TRUE, 
-            axes = TRUE, ...)
-        convex.hull(tri, plot.it = TRUE, add = TRUE)
-        persp(interp(x, y, z, ), theta = -40, phi = 20, xlab = "x", 
-            ylab = "y", zlab = "z", ...)
+        if(render == "contour"){
+                plot(x, y, type = "n", ...)
+                contour(interp(x, y, z), add = TRUE, frame.plot = TRUE, ...)
+                convex.hull(tri, plot.it = TRUE, add = TRUE)
+                }
+        else if(render == "persp")
+                persp(interp(x, y, z, ), theta = -40, phi = 20, xlab = "x", 
+                        ylab = "y", zlab = "z", ...)
+        else stop(paste("Unable to render: ",render))
     }
 }
 "plot.rqss" <-
@@ -366,11 +367,11 @@ function (x, ...)
         qss <- x$qss[[i]]$xyz
         if (ncol(qss) == 3) {
             qss[, 3] <- x$coef[1] + qss[, 3]
-            plot.qss2(qss, ...)
+            plot.qss2(qss,  ...)
         }
-        else if (ncol(x$qss[[i]]) == 2) {
-            x$qss[[i]][, 2] <- x$coef[1] + x$qss[[i]][, 2]
-            plot.qss1(x$qss[[i]], ...)
+        else if (ncol(qss) == 2) {
+            qss[, 2] <- x$coef[1] + qss[, 2]
+            plot.qss1(qss, ...)
         }
         else stop("invalid fitted qss object")
     }

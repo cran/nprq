@@ -87,7 +87,7 @@ Tortoise:  Computability of Squared-error vs Absolute Error Estimators,
 \emph{Biometrika}, 81, 673-680.
 
 [3] Koenker, R. and I. Mizera, (2003)   Penalized Triograms: Total Variation
-Regularization for Bivariate Smoothing, \emph{JRSS(B)}, forthcoming.
+Regularization for Bivariate Smoothing, \emph{JRSS(B)}, 66,145-163.
 
 [4] Koenker, R. and  P. Ng (2003)  SparseM:  A Sparse Linear Algebra Package for R,
 \emph{J. Stat. Software}.
