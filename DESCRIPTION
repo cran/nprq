@@ -1,5 +1,5 @@
 Package:  nprq
-Version:  0.51
+Version:  0.53
 Author:   Roger Koenker <rkoenker@uiuc.edu> and Pin Ng <Pin.Ng@NAU.EDU>
 Maintainer:  Roger Koenker <rkoenker@uiuc.edu>
 Depends: R (>= 1.7), quantreg, SparseM, tripack, akima

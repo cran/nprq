@@ -397,9 +397,9 @@ list(x=x,y=y,F=z)
     m <- 13 * n
     z <- .Fortran("penalty", as.integer(n), as.integer(m), as.integer(q), 
         as.double(x), as.double(y), as.integer(bnd),as.integer(tri$tlist), 
-        as.integer(tri$tlptr), as.integer(tri$tlend), rax = double(m), jax = integer(m), 
-        ned = integer(1), as.double(eps), ierr = integer(1))[c("rax", 
-        "jax", "iax", "ned", "ierr",PACKAGE = "nprq")]
+        as.integer(tri$tlptr), as.integer(tri$tlend), rax = double(m), 
+	jax = integer(m), ned = integer(1), as.double(eps), ierr = integer(1),
+	PACKAGE = "nprq")[c("rax", "jax", "iax", "ned", "ierr")]
     if (z$ierr == 1) 
         stop("collinearity in ggap")
     nnz <- 4 * z$ned
