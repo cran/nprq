@@ -106,8 +106,6 @@ fit <- rqss(y~qss(x,constraint="I")+z)
 lines(x[-1],fit$coef[1]+fit$coef[-(1:2)],col="blue")
 fit <- rqss(y~qss(x,constraint="CI")+z)
 lines(x[-1],fit$coef[1]+fit$coef[-(1:2)],col="red")
-#Cleanup
-rm(list=ls())
 #A bivariate example
 data(CobarOre)
 attach(CobarOre)
