@@ -1,3 +1,15 @@
+"[.terms" <- function (termobj, i) 
+{
+    resp <- if (attr(termobj, "response")) 
+        termobj[[2]]
+    else NULL
+    newformula <- attr(termobj, "term.labels")[i]
+    if (length(newformula) == 0) 
+        newformula <- 1
+    newformula <- reformulate(newformula, resp)
+    environment(newformula) <- environment(termobj)
+    terms(newformula, specials = names(attr(termobj, "specials")))
+}
 "rqss" <-
 function (formula, tau = 0.5, data = parent.frame(), weights, 
     na.action, method = "fn", contrasts = NULL, ...) 
@@ -86,8 +98,8 @@ function (formula, tau = 0.5, data = parent.frame(), weights,
         for(i in 1:mqss){
 		ML <- p+1+ncA[i]
                 MU <- p+ncA[i+1]
-                qss[[i]] <- cbind(qss[[i]]$x$x,qss[[i]]$x$y,
-                        c(0,fit$coef[ML:MU]))
+                qss[[i]] <- list(xyz = cbind(qss[[i]]$x$x,qss[[i]]$x$y,
+                        c(0,fit$coef[ML:MU])), dummies = qss[[i]]$dummies)
 		}
 	fit$qss <- qss
     }
@@ -130,14 +142,16 @@ function (tt, special, order = 1)
         "order"), order, nomatch = 0)])
 }
 "qss" <-
-function(x, constraint = "N", lambda = 1, w=rep(1,length(x))){
+function(x, constraint = "N", lambda = 1, ndum = 0, dummies = NULL, w=rep(1,length(x))){
    if(is.list(x)) 
         if(all(!is.na(match(c("x", "y"), names(x))))) 
-		qss <- qss2(x$x,x$y,constraint=constraint, lambda=lambda, w=w)
+		qss <- qss2(x$x,x$y,constraint=constraint,
+			dummies = dummies, lambda=lambda, ndum= ndum, w=w)
         else stop("called with list lacking xy elements")
    else if(is.matrix(x))
 	if(ncol(x)==2)
-		qss <- qss2(x[,1],x[,2],constraint=constraint, lambda=lambda, w=w)
+		qss <- qss2(x[,1],x[,2],constraint=constraint, 
+			dummies = dummies, lambda=lambda, ndum= ndum, w=w)
         else stop("matrix argument to qss must have two columns")
    else if(is.vector(x))
 	qss <- qss1(x,constraint=constraint, lambda=lambda, w=w)
@@ -146,7 +160,7 @@ function(x, constraint = "N", lambda = 1, w=rep(1,length(x))){
    qss
 }
 "qss2" <-
-function(x, y, constraint = "N", lambda = 1, w=rep(1,length(x))){
+function(x, y, constraint = "N", lambda = 1, ndum= 0, dummies = NULL, w=rep(1,length(x))){
 #
 # Sparse Additive Quantile Smoothing Spline Models - Bivariate (Triogram) Module
 #
@@ -191,7 +205,7 @@ function(x, y, constraint = "N", lambda = 1, w=rep(1,length(x))){
    n <- length(x)
    if(n != length(y))
           stop("xy lengths do not match")
-   f <- triogram.fidelity(x,y)
+   f <- triogram.fidelity(x,y, ndum = ndum, dummies = dummies)
    F <- f$F
    A <- triogram.penalty(f$x, f$y)
 
@@ -204,7 +218,7 @@ switch(constraint,
                 },
         N = { R=NULL; r=NULL}
         )
-   list(x = list(x=f$x, y=f$y), F=F[,-1], A=lambda*A[,-1], R=R[,-1], r=r)
+   list(x = list(x=f$x, y=f$y), F=F[,-1], dummies = f$dummies, A=lambda*A[,-1], R=R[,-1], r=r)
 }
 
 "qss1" <-
@@ -313,40 +327,55 @@ function(x, ...)
 lines(x[,1],x[,2], ...)
 }
 "plot.qss2" <-
-function (x, ...)
+function (x, rgl = FALSE, ncol = 100, zcol = NULL, ...) 
 {
-require(akima)
-require(tripack)
-
-        y <- x[,2]
-        z <- x[,3]
-        x <- x[,1]
-	par(mfrow=c(1,2))
-        plot(x,y,type="n",axes=TRUE,xlab="x",ylab="y")
-        contour(interp(x,y,z),add=TRUE,frame.plot=TRUE, axes=TRUE, ...)
-        tri <- tri.mesh(x,y)
-        convex.hull(tri,plot.it=TRUE,add=TRUE)
-	persp(interp(x,y,z,),theta=-40,phi=20,xlab="x",ylab="y",zlab="z", ...)
+    require(tripack)
+    if (rgl) 
+        require(rgl)
+    y <- x[, 2]
+    z <- x[, 3]
+    x <- x[, 1]
+    tri <- tri.mesh(x, y)
+    if (rgl) {
+        collut <- terrain.colors(ncol)
+        if(!length(zcol))zcol <- z
+        if (max(z) > max(zcol) || min(z) < min(zcol)) 
+            warning("fitted z values out of range of zcol vector")
+        zlim <- range(zcol)
+        colz <- ncol * (z - zlim[1])/(zlim[2] - zlim[1]) + 1
+        colz <- collut[colz]
+        s <- c(t(triangles(tri)[, 1:3]))
+        rgl.triangles(x[s], y[s], z[s], col = colz[s])
+    }
+    else {
+        require(akima)
+        par(mfrow = c(1, 2))
+        plot(x, y, type = "n", axes = TRUE, xlab = "x", ylab = "y")
+        contour(interp(x, y, z), add = TRUE, frame.plot = TRUE, 
+            axes = TRUE, ...)
+        convex.hull(tri, plot.it = TRUE, add = TRUE)
+        persp(interp(x, y, z, ), theta = -40, phi = 20, xlab = "x", 
+            ylab = "y", zlab = "z", ...)
+    }
 }
 "plot.rqss" <-
-function(x, ...) 
+function (x, ...) 
 {
-m <- length(x$qss)
-for( i in 1:m){
-        if(ncol(x$qss[[i]])==3){
-		x$qss[[i]][,3] <- x$coef[1] + x$qss[[i]][,3]
-            	plot.qss2(x$qss[[i]], ...)
-	   }
-        else if(ncol(x$qss[[i]])==2){
-		x$qss[[i]][,2] <- x$coef[1] + x$qss[[i]][,2]
-            	plot.qss1(x$qss[[i]], ...)
-	   }
-        else
-                stop("invalid fitted qss object")
+    m <- length(x$qss)
+    for (i in 1:m) {
+        qss <- x$qss[[i]]$xyz
+        if (ncol(qss) == 3) {
+            qss[, 3] <- x$coef[1] + qss[, 3]
+            plot.qss2(qss, ...)
         }
+        else if (ncol(x$qss[[i]]) == 2) {
+            x$qss[[i]][, 2] <- x$coef[1] + x$qss[[i]][, 2]
+            plot.qss1(x$qss[[i]], ...)
+        }
+        else stop("invalid fitted qss object")
+    }
 }
-
-"triogram.fidelity" <- function (x,y,ndum=0) 
+"triogram.fidelity" <- function (x, y, ndum=0, dummies = NULL)
 {
 #Make fidelity block of the triogram design in sparse matrix.csr form
 #The rather esoteric match call identifies and handles duplicated xy points
@@ -362,7 +391,23 @@ if(any(dupA)){
 else
   z <- as.matrix.csr(diag(n))
 #Augment with dummy vertices, if any...
-if(ndum > 0){
+if(length(dummies)){
+	if (is.list(dummies)){
+        	if (all(!is.na(match(c("x", "y"), names(dummies))))){
+        		ndum <- length(dummies$x)
+			if(length(dummies$y) == ndum){
+        			x <- c(x,dummies$x)
+        			y <- c(y,dummies$y)
+        			zdum <- as.matrix.csr(0,n,ndum)
+        			z <- cbind(z,zdum)
+				}
+        		else stop("dummies x and y components differ in length")
+			}
+        	else stop("dummies list lacking x and y elements")
+		}
+    	else stop("dummies argument invalid (not a list) in triogram.fidelity")
+	}
+else if(ndum > 0){
         u <- runif(ndum); v <- runif(ndum)
         xd <- min(x) + u * (max(x)-min(x))
         yd <- min(y) + v * (max(y)-min(y))
@@ -371,10 +416,11 @@ if(ndum > 0){
         x <- c(x,xd[s])
         y <- c(y,yd[s])
         ndum <- sum(s)
-        zdum <- matrix.csr(0,n,ndum)
+        zdum <- as.matrix.csr(0,n,ndum)
         z <- cbind(z,zdum)
+	dummies <- list(x = xd[s],y = yd[s])
         }
-list(x=x,y=y,F=z)
+list(x=x,y=y,F=z, dummies = dummies)
 }
 "triogram.penalty" <- function (x, y, eps = .Machine$double.eps) 
 {
