@@ -19,7 +19,10 @@ qss(x, constraint = "N", lambda = 1, w = rep(1, length(x)))
 	x is a matrix with two columns then  the qss
 	function will construct a penalized triogram term.}
   \item{lambda}{The smoothing parameter governing the tradeoff between
-	fidelity and the penalty component for this term.}
+	fidelity and the penalty component for this term.  In future
+	versions there should be an automatic mechanism for default
+	choice of the lambdas.  For now, this is the responsibility
+	of the user.}
   \item{constraint}{Optional specification of qualitative constraints 
 	on the fitted univariate qss functions, take the values: "N","I","D","U","C"
 	"UI","UD","CI","CD" for none, increasing, decreasing, convex,

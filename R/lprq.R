@@ -2,7 +2,7 @@
 function(x, y, h, tau = .5, m = 50)
 {
 	require(quantreg)
-        xx <- seq(min(x),max(x),length=50)
+        xx <- seq(min(x),max(x),length=m)
         fv <- xx
         der <- xx
         for(i in 1:length(xx)) {

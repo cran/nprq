@@ -399,7 +399,7 @@ list(x=x,y=y,F=z)
         as.double(x), as.double(y), as.integer(bnd),as.integer(tri$tlist), 
         as.integer(tri$tlptr), as.integer(tri$tlend), rax = double(m), jax = integer(m), 
         ned = integer(1), as.double(eps), ierr = integer(1))[c("rax", 
-        "jax", "iax", "ned", "ierr")]
+        "jax", "iax", "ned", "ierr",PACKAGE = "nprq")]
     if (z$ierr == 1) 
         stop("collinearity in ggap")
     nnz <- 4 * z$ned
