@@ -1,7 +1,0 @@
-ChicagoLand             Land Values in Chicago Metropolitan Area
-CobarOre                Cobar Ore data 
-plot                    Default Ploting Method for rqss()
-qss                     Additive Nonparametric Terms for rqss Fitting
-rq.fit.sfn              Sparse Regression Quantile Fitting
-rq.fit.sfnc             Sparse Constrained Regression Quantile Fitting
-rqss                    Additive Quantile Regression Smoothing
